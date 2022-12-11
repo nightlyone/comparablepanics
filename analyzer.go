@@ -1,9 +1,8 @@
-// Package usesgenerics defines an Analyzer that checks for usage of generic
-// features added in Go 1.18.
+// Package comparablepanics defines an Analyzer that checks for usage of arguments constrainte by
+// comparable that will panic at runtime at Go 1.20+.
 package comparablepanics
 
 import (
-	"fmt"
 	"go/ast"
 	"go/types"
 
@@ -33,7 +32,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	// No generics? Ignore.
 	if hasGenerics.Direct&(usesgenerics.FuncInstantiation|usesgenerics.TypeInstantiation) == 0 {
-		fmt.Println("no generics")
 		return nil, nil
 	}
 	funcsWithGenerics := make(map[string]types.Type)
