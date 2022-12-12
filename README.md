@@ -2,8 +2,9 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/nightlyone/comparablepanics.svg)](https://pkg.go.dev/github.com/nightlyone/comparablepanics)
 
 Go 1.20+ will change the semantics of the comparable constraint will include
-interfaces. Interfaces in Go have always behaved that that way and the
-comparable constraint was the outlier.
+interfaces. Interfaces in Go have always been comparable and woud panic at
+runtime, when the type stored in the interface has no comparision defined on it
+the comparable constraint was the outlier, soo that changed.
 
 So far that makes sense, but some people already wrote type safe
 generic code that worked with the comparable constraint and may want to know
