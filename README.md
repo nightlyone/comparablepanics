@@ -15,8 +15,8 @@ the effect of your upgrade and help Go programmers to workaround it.
 Another use case is never allowing this new feature in your own code.
 
 ## TODO
-* [ ] Tests (couldn't publish mine for copyright reasons)
-* [ ] CI/CD with github actions
+* [x] Tests (couldn't publish mine for copyright reasons)
+* [x] CI/CD with github actions
 * [ ] Announce it in golang-nuts
 * [ ] Be smarter and follow type inference further
 * [ ] Ask for integration into golangci-lint
