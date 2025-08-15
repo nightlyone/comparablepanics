@@ -2,7 +2,7 @@ module github.com/nightlyone/comparablepanics
 
 go 1.23.0
 
-toolchain go1.24.6
+toolchain go1.25.0
 
 require golang.org/x/tools v0.36.0
 
