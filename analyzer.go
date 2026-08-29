@@ -1,5 +1,5 @@
-// Package comparablepanics defines an Analyzer that checks for usage of arguments constrainte by
-// comparable that will panic at runtime at Go 1.20+.
+// Package comparablepanics reports generic calls that may panic when using
+// the comparable constraint under Go 1.20+.
 package comparablepanics
 
 import (
@@ -12,6 +12,8 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
+// Analyzer reports generic calls whose comparable type arguments may panic at runtime
+// on Go 1.20+.
 var Analyzer = &analysis.Analyzer{
 	Name: "comparablepanics",
 	Doc:  Doc,
@@ -22,11 +24,14 @@ var Analyzer = &analysis.Analyzer{
 	Run: run,
 }
 
-const Doc = `detects whether a comparable type instantiations can panic at runtime
-to ensure code written for Go 1.18 or 1.19 under the assumption that comparable cannot panic
+// Doc is the analyzer description shown by go doc and tooling.
+const Doc = `detects whether a comparable type instantiation can panic at runtime
+so code written for Go 1.18 or 1.19 under the assumption that comparable cannot panic
 will also not panic in Go 1.20 and later`
 
-func run(pass *analysis.Pass) (interface{}, error) {
+// run checks the AST for generic function instantiations and reports any
+// comparable-constraint arguments that may panic at runtime.
+func run(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	hasGenerics := pass.ResultOf[usesgenerics.Analyzer].(*usesgenerics.Result)
 
@@ -41,6 +46,8 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
+// runFunc records generic function declarations and dispatches calls for
+// comparable-constraint checks.
 func runFunc(pass *analysis.Pass, node ast.Node, funcsWithGenerics map[string]types.Type) {
 	switch v := node.(type) {
 	case *ast.CallExpr:
@@ -54,6 +61,8 @@ func runFunc(pass *analysis.Pass, node ast.Node, funcsWithGenerics map[string]ty
 
 }
 
+// runCall inspects a call expression and reports arguments that are not safe for
+// a comparable type parameter under Go 1.20+.
 func runCall(pass *analysis.Pass, call *ast.CallExpr, funcsWithGenerics map[string]types.Type) {
 	if len(call.Args) == 0 {
 		return
@@ -75,8 +84,7 @@ func runCall(pass *analysis.Pass, call *ast.CallExpr, funcsWithGenerics map[stri
 		return
 	}
 	comparableTypeNames := make(map[string]struct{})
-	for i := 0; i < sig.TypeParams().Len(); i++ {
-		tp := sig.TypeParams().At(i)
+	for tp := range sig.TypeParams().TypeParams() {
 		if !isComparableTypeName(tp) {
 			continue
 		}
@@ -97,6 +105,8 @@ func runCall(pass *analysis.Pass, call *ast.CallExpr, funcsWithGenerics map[stri
 
 }
 
+// isComparableWithoutPanic reports whether an expression's type is comparable
+// without triggering the Go 1.20+ panic case for a comparable constraint.
 func isComparableWithoutPanic(arg ast.Expr, info *types.Info) bool {
 	typ := info.TypeOf(arg)
 	var recursiveIsComparableWithoutPanic func(typ types.Type) bool
@@ -113,8 +123,8 @@ func isComparableWithoutPanic(arg ast.Expr, info *types.Info) bool {
 			return true
 		}
 		if st, ok := typ.(*types.Struct); ok {
-			for i := 0; i < st.NumFields(); i++ {
-				if !recursiveIsComparableWithoutPanic(st.Field(i).Type()) {
+			for field := range st.Fields() {
+				if !recursiveIsComparableWithoutPanic(field.Type()) {
 					return false
 				}
 			}
@@ -128,6 +138,8 @@ func isComparableWithoutPanic(arg ast.Expr, info *types.Info) bool {
 	return recursiveIsComparableWithoutPanic(typ)
 }
 
+// isComparableTypeName reports whether the type parameter is constrained by
+// the comparable interface or by a type parameter named comparable.
 func isComparableTypeName(tp *types.TypeParam) bool {
 	if tp.Obj().Name() == "comparable" && tp.Obj().Pkg() == nil {
 		return true
