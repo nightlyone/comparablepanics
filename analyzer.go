@@ -119,21 +119,21 @@ func isComparableWithoutPanic(arg ast.Expr, info *types.Info) bool {
 		}
 
 		typ = typ.Underlying()
-		if _, ok := typ.(*types.Basic); ok {
+		switch tp := typ.(type) {
+		case *types.Basic:
 			return true
-		}
-		if st, ok := typ.(*types.Struct); ok {
-			for field := range st.Fields() {
+		case *types.Struct:
+			for field := range tp.Fields() {
 				if !recursiveIsComparableWithoutPanic(field.Type()) {
 					return false
 				}
 			}
 			return true
+		case *types.Array:
+			return recursiveIsComparableWithoutPanic(tp.Elem())
+		default:
+			return false
 		}
-		if at, ok := typ.(*types.Array); ok {
-			return recursiveIsComparableWithoutPanic(at.Elem())
-		}
-		return false
 	}
 	return recursiveIsComparableWithoutPanic(typ)
 }
