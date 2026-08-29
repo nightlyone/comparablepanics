@@ -120,7 +120,11 @@ func isComparableWithoutPanic(arg ast.Expr, info *types.Info) bool {
 
 		typ = typ.Underlying()
 		switch tp := typ.(type) {
+		case *types.Interface:
+			return false // That is exactly the case that can panic at runtime in Go 1.20+.
 		case *types.Basic:
+			return true
+		case *types.Pointer:
 			return true
 		case *types.Struct:
 			for field := range tp.Fields() {
